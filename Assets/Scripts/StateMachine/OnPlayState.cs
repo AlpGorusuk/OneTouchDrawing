@@ -27,7 +27,7 @@ public class OnPlayState : State
 
             if (selectedDot != null)
             {
-
+                Debug.Log("TAPPED DOT");
             }
         }
     }

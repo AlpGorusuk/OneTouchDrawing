@@ -14,14 +14,14 @@ public class GameManager : MonoBehaviour
         onPlayState = new OnPlayState(this, sceneStateMachine);
         winState = new WinState(this, sceneStateMachine);
         failState = new FailState(this, sceneStateMachine);
-        //set Init State
-        sceneStateMachine.ChangeState(onPlayState);
+
     }
 
     // Start is called before the first frame update
     void Start()
     {
-
+        //set Init State
+        sceneStateMachine.Initialize(onPlayState);
     }
 
     // Update is called once per frame
