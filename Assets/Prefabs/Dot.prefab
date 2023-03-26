@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 8786052786733199608}
   - component: {fileID: 8786052786733199615}
   - component: {fileID: 3187633685866528863}
-  - component: {fileID: 2185797178580777893}
+  - component: {fileID: 183779746563973231}
   m_Layer: 3
   m_Name: Dot
   m_TagString: Untagged
@@ -184,16 +184,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c0edea25c65b8842921785e349f492f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!135 &2185797178580777893
-SphereCollider:
+  _clickedBG: {fileID: 1209995322}
+  Index: 0
+  nonEdgeDotList: []
+--- !u!58 &183779746563973231
+CircleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8786052786733199614}
+  m_Enabled: 1
+  m_Density: 1
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}

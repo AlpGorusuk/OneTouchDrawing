@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour
     public OnPlayState onPlayState;
     public WinState winState;
     public FailState failState;
+    public GraphControl figureControl;
     private void Awake()
     {
         sceneStateMachine = new StateMachine();
@@ -27,6 +28,14 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        UpdateCurrentState();
+    }
 
+    private void UpdateCurrentState()
+    {
+        if (sceneStateMachine.CurrentState != null)
+        {
+            sceneStateMachine.CurrentState.Update();
+        }
     }
 }

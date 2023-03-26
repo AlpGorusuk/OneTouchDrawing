@@ -3,37 +3,39 @@ using UnityEditor;
 
 public class ObjectCreator : EditorWindow
 {
-    private GameObject newObject;
-    
+    private GameObject dotObject;
+    private int dotCount = -1;
+
     [MenuItem("Tools/Object Creator")]
     public static void ShowWindow()
     {
         EditorWindow.GetWindow(typeof(ObjectCreator));
     }
-    
+
     private void OnGUI()
     {
         GUILayout.Label("Create a new object", EditorStyles.boldLabel);
-        
-        newObject = EditorGUILayout.ObjectField("Prefab", newObject, typeof(GameObject), false) as GameObject;
-        
+
+        dotObject = EditorGUILayout.ObjectField("dotObject", dotObject, typeof(GameObject), false) as GameObject;
+
         if (GUILayout.Button("Create Object"))
         {
-            CreateNewObject();
+            CreateDotObject();
         }
     }
-    
-    private void CreateNewObject()
+    private void CreateDotObject()
     {
-        if (newObject != null)
+        if (dotObject != null)
         {
             Vector3 spawnPosition = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition).origin;
-            GameObject obj = PrefabUtility.InstantiatePrefab(newObject) as GameObject;
-            obj.transform.position = spawnPosition;
-            Selection.activeObject = obj;
+            GameObject temp = PrefabUtility.InstantiatePrefab(dotObject) as GameObject;
+            temp.name = dotCount.ToString();
+            temp.GetComponent<Dot>().Index = dotCount;
+            temp.transform.position = new Vector3(spawnPosition.x, spawnPosition.y, 0);
+            Selection.activeObject = temp;
+            dotCount++;
         }
     }
-    
     private void OnEnable()
     {
         SceneView.duringSceneGui += OnSceneGUI;
@@ -49,7 +51,7 @@ public class ObjectCreator : EditorWindow
         Event e = Event.current;
         if (e.type == EventType.MouseDown && e.button == 0)
         {
-            CreateNewObject();
+            CreateDotObject();
             e.Use();
         }
     }

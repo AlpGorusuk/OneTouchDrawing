@@ -1,9 +1,13 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
-[Serializable]
+
+#region PoolableType Definition
+[System.Serializable]
 public class PoolableType
 {
     [Tooltip(@"The Name of this Type of Poolable Object (Does not effect operation)")]
@@ -21,21 +25,57 @@ public class PoolableType
     [Tooltip(@"If true, the object pool can ignore the maximum if there are no objects in storage, and another is requested.")]
     public bool AutoExpand;
 }
-public class ObjectPooler : Singleton<ObjectPooler>
+#endregion
+
+public class ObjectPooler : MonoBehaviour
 {
-    [SerializeField]
-    private List<PoolableType> PoolableTypes = new List<PoolableType>();
+    #region Variables
+    /// <summary>
+    /// A static instance of the ObjectPooler
+    /// </summary>
+	private static ObjectPooler Instance;
+
+    [Tooltip("If true, the Object Pooler will organize individual object pools under assigned parent transforms. Only works if checked before starting the game.")]
     [SerializeField]
     private bool UseParentTransforms = false;
-    private Dictionary<string, PoolableType> TagTypeLookup;
-    private Dictionary<GameObject, PoolableType> PrefabTypeLookup;
-    private Dictionary<string, Queue<GameObject>> SleepingObjects;
-    private Dictionary<string, HashSet<GameObject>> ActiveObjects;
-    private Dictionary<string, Transform> TypeParents;
 
-    //Init
-    public override void Awake()
+    /// <summary>
+    /// A list of all poolable types (to be set in the inspector)
+    /// </summary>
+    [Tooltip(@"A list of Poolable Type Definitions")]
+    [SerializeField]
+    private List<PoolableType> PoolableTypes = new List<PoolableType>();
+
+    /// <summary>
+    /// a lookup table to link a sorting tag to a poolable type
+    /// </summary>
+    private Dictionary<string, PoolableType> TagTypeLookup;
+
+    /// <summary>
+    /// A lookup table which links a prefab to an object pool
+    /// </summary>
+    private Dictionary<GameObject, PoolableType> PrefabTypeLookup;
+
+    /// <summary>
+    /// A dictionary to link a sorting tag to a pool of sleeping objects.
+    /// </summary>
+    private Dictionary<string, Queue<GameObject>> SleepingObjects;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    private Dictionary<string, HashSet<GameObject>> ActiveObjects;
+
+    /// <summary>
+    /// A lookup table which links a sorting tag to a parent transform (assuming UseParentTransforms = true)
+    /// </summary>
+    private Dictionary<string, Transform> TypeParents;
+    #endregion
+
+    #region Initialize
+    private void Awake()
     {
+        Instance = this;
 
         // init dictionaries
         if (UseParentTransforms)
@@ -78,8 +118,14 @@ public class ObjectPooler : Singleton<ObjectPooler>
             }
         }
     }
+    #endregion
 
-    //Destroy
+    #region Destroy
+
+    /// <summary>
+    /// Deactivate an active object, and enqueue it for later restoration.
+    /// </summary>
+    /// <param name="obj">The active object to deactivate</param>
     public static void Destroy(GameObject obj) => Instance._Destroy(obj);
     public static void DestroyWithTag(string objName) => Instance._Destroy(objName);
 
@@ -112,8 +158,17 @@ public class ObjectPooler : Singleton<ObjectPooler>
         // and add it to the sleeping queue
         SleepingObjects[sortingTag].Enqueue(goList[0]);
     }
+    #endregion
 
-    //Generate
+    #region Generate
+    /// <summary>
+    /// Grab a member from the list of SleepingObjects
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="Identifier">Either the Prefab to instantiate or the Tag for the PoolableType</param>
+    /// <param name="Position">The Position to activate the object at</param>
+    /// <param name="Rotation">The Rotation to activate the object with</param>
+    /// <returns>A gameobject from the correct pool</returns>
     public static GameObject Generate<T>(T Identifier, Vector3 Position, Quaternion Rotation) =>
         Instance._Generate(Identifier, Position, Rotation);
 
@@ -180,4 +235,5 @@ public class ObjectPooler : Singleton<ObjectPooler>
 
         return Member;
     }
+    #endregion
 }
