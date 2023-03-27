@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
     public OnPlayState onPlayState;
     public WinState winState;
     public FailState failState;
-    public GraphControl figureControl;
+    public GraphControl graphControl;
     private void Awake()
     {
         sceneStateMachine = new StateMachine();

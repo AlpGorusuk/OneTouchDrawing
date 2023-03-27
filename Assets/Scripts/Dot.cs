@@ -10,7 +10,6 @@ public class Dot : MonoBehaviour
     private GameObject _clickedBG;
     public Action ClickedCallback, ResetCallback;
     public int Index;
-    public List<Dot> nonEdgeDotList;
     private void OnEnable()
     {
         ClickedCallback += ShowClickedBG;
@@ -28,5 +27,5 @@ public class Dot : MonoBehaviour
 
     public void Reset() { _clickedBG.SetActive(false); }
     public Vector2 GetPos() { return transform.position; }
-
+    public int GetIndex() { return Index; }
 }
