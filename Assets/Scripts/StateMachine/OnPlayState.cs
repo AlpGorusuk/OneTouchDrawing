@@ -7,7 +7,8 @@ public class OnPlayState : State
 {
     private Vector2 mousePosition;
     private bool isDragging;
-    private Dot selectedDot;
+    Action<Vector2> _updateLineCallback;
+    Action _dotCallback;
     public OnPlayState(GameManager gameManager, StateMachine stateMachine) : base(gameManager, stateMachine)
     {
     }
@@ -27,19 +28,32 @@ public class OnPlayState : State
             if (raycastHit.collider != null)
             {
                 Dot selectedDot = raycastHit.collider.GetComponent<Dot>();
-
-                if (selectedDot == null)
+                bool isAvailableEdge = gameManager.graphControl.isAvailableEdge(selectedDot.GetIndex());
+                if (isAvailableEdge)
                 {
-                    Action<Vector2> _updateLRCallback = gameManager.graphControl.UpdateSelectLineRendererCallback;
-                    _updateLRCallback?.Invoke(mousePosition);
+                    _dotCallback = selectedDot.ClickedCallback;
+                    _dotCallback?.Invoke();
+                    Action<Dot> _startLineCallback = gameManager.graphControl.vertexClickedCallback;
+                    _startLineCallback?.Invoke(selectedDot);
                 }
                 else
                 {
-
+                    UpdateLineCallback(gameManager.graphControl.updateLineCallback, temp);
                 }
+            }
+            else
+            {
+                UpdateLineCallback(gameManager.graphControl.updateLineCallback, temp);
             }
         }
     }
+
+    private void UpdateLineCallback(Action<Vector2> updateLineCallback, Vector2 temp)
+    {
+        Action<Vector2> _updateLineCallback = updateLineCallback;
+        _updateLineCallback?.Invoke(temp);
+    }
+
     // Input
 
     private void On_Pointer_Down(Vector2 pos)
@@ -52,12 +66,22 @@ public class OnPlayState : State
 
             if (selectedDot != null)
             {
-                Action _dotCallback = selectedDot.ClickedCallback;
+                _dotCallback = selectedDot.ClickedCallback;
                 _dotCallback?.Invoke();
-                Action<Dot> _initLRCallback = gameManager.graphControl.DotClickCallback;
-                _initLRCallback?.Invoke(selectedDot);
+                Action<Dot> _startLineCallback = gameManager.graphControl.vertexClickedCallback;
+                _startLineCallback?.Invoke(selectedDot);
                 isDragging = true;
             }
+        }
+        else
+        {
+            bool isLineNull = gameManager.graphControl.isCurrentLineNull();
+            if (!isLineNull)
+            {
+                isDragging = true;
+            }
+            _updateLineCallback = gameManager.graphControl.updateLineCallback;
+            _updateLineCallback?.Invoke(mousePosition);
         }
     }
 
@@ -70,12 +94,9 @@ public class OnPlayState : State
 
     private void On_Pointer_Up(Vector2 pos)
     {
-        if (selectedDot == null) { return; }
-        selectedDot = null;
         isDragging = false;
-        mousePosition = Vector2.zero;
-        Action _resetLRCallback = gameManager.graphControl.ResetCurrentLineRendererCallback;
-        _resetLRCallback?.Invoke();
+        _updateLineCallback = gameManager.graphControl.updateLineCallback;
+        _updateLineCallback?.Invoke(mousePosition);
     }
 
     private void On_Drag(Vector2 delta)

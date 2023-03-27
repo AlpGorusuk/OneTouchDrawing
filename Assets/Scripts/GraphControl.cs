@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
+using DG.Tweening.Plugins.Core;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -9,35 +11,35 @@ public class GraphControl : MonoBehaviour
     public int startIndexForCheckEdgesVisited = 0;
     public List<Dot> dotList;
     public List<Edge> edgeList;
+    public List<Edge> allPossibleEdgeList;
     Dictionary<int, Vector2> Vertices = new Dictionary<int, Vector2>();
     List<int> eulerPath = new List<int>();
     public LineRenderer BGLineRenderer;
     //OnGameplay variables
-    public LineRenderer currGameplayLineRenderer;
+    private LineRenderer currGameplayLineRenderer;
     private const int LINE_RENDERER_POS_COUNT = 2;
-    private bool[] visitedVertices;
-    private List<int> visitedEdgeIndices;
+    private bool[] visitedEdge;
+    private List<int> availableEdgeIndexList = new List<int>();
+    private List<int> visitableEdgeIndices;
     //Gameplay Callbacks
-    public Action<Dot> DotClickCallback;
-    public Action<Vector2> UpdateSelectLineRendererCallback;
-    public Action ResetCurrentLineRendererCallback;
-    private Vector2? startVertex, endVertex;
+    public Action<Dot> vertexClickedCallback;
+    public Action<Vector2> updateLineCallback;
+    public Dot startVertex;
     private void OnEnable()
     {
-        DotClickCallback += VisitVertex;
-        UpdateSelectLineRendererCallback += UpdateGamePlayLineRenderer;
-        // ResetCurrentLineRendererCallback += 
+        vertexClickedCallback += VisitVertex;
+        updateLineCallback += UpdateLine;
     }
     private void OnDisable()
     {
-        DotClickCallback -= VisitVertex;
-        UpdateSelectLineRendererCallback -= UpdateGamePlayLineRenderer;
+        vertexClickedCallback -= VisitVertex;
+        updateLineCallback -= UpdateLine;
     }
     private void Awake()
     {
         BGLineRenderer = GetComponent<LineRenderer>();
-        visitedVertices = new bool[dotList.Count];
-        visitedEdgeIndices = new List<int>();
+        visitedEdge = new bool[allPossibleEdgeList.Count];
+        visitableEdgeIndices = new List<int>();
     }
     //OnEditor Updates
     [ContextMenu("Reset Graph")]
@@ -52,6 +54,24 @@ public class GraphControl : MonoBehaviour
         SetVertices();
         SetEulerPath();
         DrawEulerPath(eulerPath);
+    }
+    [ContextMenu("Set All Possible Edges")]
+    public void SetAllPossibleEdges()
+    {
+        int tempCount = edgeList.Count;
+        for (int i = 0; i < tempCount; i++)
+        {
+            int from = edgeList[i].FromVertex;
+            int to = edgeList[i].ToVertex;
+            Edge _edge = new Edge(to, from);
+            allPossibleEdgeList.Add(_edge);
+        }
+        allPossibleEdgeList.AddRange(edgeList);
+    }
+    [ContextMenu("reset All Possible Edges")]
+    public void ResetAllPossibleEdges()
+    {
+        allPossibleEdgeList.Clear();
     }
 
     private void SetEulerPath()
@@ -98,131 +118,106 @@ public class GraphControl : MonoBehaviour
         BGLineRenderer.positionCount = pathPoints.Count;
         BGLineRenderer.SetPositions(pathPoints.ToArray());
     }
-    // Onplay Control Graph
-    // Köşe ziyareti gerçekleştirir
-    private void SetStartVertex(Dot vertex)
-    {
-        // Vector2 temp = vertex.GetPos();
-        // startVertex = temp;
-        // SetLineInitPos(startVertex.Value);
-    }
-    private void VisitVertices(Vector2 mousePosition)
-    {
-        // if (startVertex != null)
-        // {
-        //     Vector2? clickedVertex = GetClosestVertex(mousePosition, 0.2f);
-        //     Debug.Log(clickedVertex);
-        //     if (clickedVertex == null) { DrawLine(mousePosition); }
-        //     if (clickedVertex != null && clickedVertex != gameplayLineRenderer.GetPosition(gameplayLineRenderer.positionCount - 2))
-        //     {
-        //         gameplayLineRenderer.positionCount++;
-        //         DrawLine(mousePosition);
-        //         clickedVertex = null;
-        //     }
-        // }
-    }
-    private Vector2? GetClosestVertex(Vector2 point, float maxDistance)
-    {
-        foreach (Dot _dot in dotList)
-        {
-            Vector2 tempPos = _dot.GetPos();
-            if (Vector2.Distance(point, tempPos) <= maxDistance)
-            {
-                return tempPos;
-            }
-        }
-
-        return null;
-    }
-    // private void SetLineInitPos(Vector2 toVertex)
-    // {
-    //     gameplayLineRenderer.SetPosition(0, toVertex);
-    // }
-    // private void DrawLine(Vector2 toVertex)
-    // {
-    //     gameplayLineRenderer.SetPosition(gameplayLineRenderer.positionCount - 1, toVertex);
-    // }
-
-
-    private void Update()
-    {
-        // Sol tıklama ile seçilen köşe index'i alınır
-        // if (Input.GetMouseButtonDown(0))
-        // {
-        //     Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        //     RaycastHit2D raycastHit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity);
-        //     if (raycastHit.collider != null)
-        //     {
-        //         Dot selectedDot = raycastHit.collider.GetComponent<Dot>();
-
-        //         if (selectedDot != null)
-        //         {
-        //             int vertexIndex = selectedDot.GetIndex();
-        //             Action _dotCallback = selectedDot.ClickedCallback;
-        //             _dotCallback?.Invoke();
-        //             if (vertexIndex >= 0)
-        //             {
-        //                 VisitVertex(vertexIndex);
-        //             }
-        //         }
-        //     }
-        // }
-
-        // Çizgiyi güncelle
-        // UpdateLineRenderer();
-    }
 
     // Köşe ziyareti gerçekleştirir
     private void VisitVertex(Dot vertex)
     {
-        int vertexIndex = vertex.GetIndex();
-        Vector2 tempPos = vertex.GetPos();
-        visitedVertices[vertexIndex] = true;
-        List<int> availableEdgeIndexList = new List<int>();
-        // Ziyaret edilen tüm kenarları bul ve listeye ekle
-        for (int i = 0; i < edgeList.Count; i++)
+        if (startVertex != null)
         {
-            Edge edge = edgeList[i];
-            if (edge.FromVertex == vertexIndex && !visitedEdgeIndices.Contains(i))
+            bool isVisited = isVisitedEdge(startVertex.GetIndex(), vertex.GetIndex());
+            Debug.Log("isVisited" + isVisited + startVertex.GetIndex() + " " + vertex.GetIndex());
+            if (isVisited) return;
+            UpdateVisitedEdges(startVertex.GetIndex(), vertex.GetIndex());
+        }
+        startVertex = vertex;
+        int vertexIndex = vertex.GetIndex();
+        Debug.Log("vertexIndex" + vertexIndex);
+        List<int> _availableEdgeVertexList = new List<int>();
+        // Ziyaret edilen tüm kenarları bul ve listeye ekle
+        int tempCount = allPossibleEdgeList.Count;
+        for (int i = 0; i < tempCount; i++)
+        {
+            Edge edge = allPossibleEdgeList[i];
+            if (edge.FromVertex == vertexIndex)
             {
-                availableEdgeIndexList.Add(i);
-            }
-            else if (edge.ToVertex == vertexIndex && !visitedEdgeIndices.Contains(i))
-            {
-                availableEdgeIndexList.Add(i);
+                _availableEdgeVertexList.Add(edge.ToVertex);
             }
         }
-        CreateGameplayLineRenderer(tempPos);
-        Debug.Log(availableEdgeIndexList.Count);
+        availableEdgeIndexList = _availableEdgeVertexList;
+        for (int i = 0; i < availableEdgeIndexList.Count; i++)
+        {
+            Debug.Log("availableEdgeIndexList" + availableEdgeIndexList[i]);
+        }
+        CreateLine(vertex);
     }
-    private void CreateGameplayLineRenderer(Vector2 vertexPos)
+    private void CreateLine(Dot vertex)
     {
+        Vector2 tempPos = vertex.GetPos();
+        FixPreviousLinePos(tempPos);
         GameObject currGameplayLineRendererObject = ObjectPooler.Generate("lineRenderer");
         currGameplayLineRenderer = currGameplayLineRendererObject.GetComponent<LineRenderer>();
         currGameplayLineRenderer.positionCount = LINE_RENDERER_POS_COUNT;
         //Set pos
-        currGameplayLineRenderer.SetPosition(LINE_RENDERER_POS_COUNT - 2, vertexPos);
-        currGameplayLineRenderer.SetPosition(LINE_RENDERER_POS_COUNT - 1, vertexPos);
+        currGameplayLineRenderer.SetPosition(LINE_RENDERER_POS_COUNT - 2, tempPos);
+        currGameplayLineRenderer.SetPosition(LINE_RENDERER_POS_COUNT - 1, tempPos);
+    }
+    public bool isAvailableEdge(int _index)
+    {
+        return availableEdgeIndexList.Contains(_index);
+    }
+    public bool isCurrentLineNull()
+    {
+        if (currGameplayLineRenderer == null) return true;
+        else return false;
+    }
+    private void UpdateVisitedEdges(int from, int to)
+    {
+        for (int i = 0; i < allPossibleEdgeList.Count; i++)
+        {
+            if (!visitedEdge[i])
+            {
+                Edge edge = allPossibleEdgeList[i];
+                if (edge.FromVertex == from && edge.ToVertex == to || edge.FromVertex == to && edge.ToVertex == from)
+                {
+                    visitedEdge[i] = true;
+                    Debug.Log(i + " " + visitedEdge[i]);
+                }
+            }
+        }
+    }
+    private bool isVisitedEdge(int from, int to)
+    {
+        bool isVisited = false;
+        for (int i = 0; i < allPossibleEdgeList.Count; i++)
+        {
+            Edge edge = allPossibleEdgeList[i];
+            if (edge.FromVertex == from && edge.ToVertex == to || edge.FromVertex == to && edge.ToVertex == from)
+            {
+                if (visitedEdge[i])
+                {
+                    isVisited = true;
+                }
+                else isVisited = false;
+            }
+        }
+        return isVisited;
     }
     // Çizgiyi güncelle
-    private void UpdateGamePlayLineRenderer(Vector2 mousePos)
+    private void FixPreviousLinePos(Vector2 pos)
     {
         if (currGameplayLineRenderer != null)
         {
-            currGameplayLineRenderer.SetPosition(LINE_RENDERER_POS_COUNT - 1, mousePos);
+            Vector2 tempPos = pos;
+            currGameplayLineRenderer.SetPosition(LINE_RENDERER_POS_COUNT - 1, tempPos);
+            currGameplayLineRenderer = null;
         }
-        // int vertexIndex = vertex.GetIndex();
-        // if (!visitedEdgeIndices.Contains(vertexIndex))
-        // {
-
-        // }
-        // gameplayLineRenderer.positionCount = visitedEdgeIndices.Count * 2;
-        // for (int i = 0; i < visitedEdgeIndices.Count; i++)
-        // {
-        //     Edge edge = edgeList[visitedEdgeIndices[i]];
-        //     gameplayLineRenderer.SetPosition(i * 2, dotList[edge.FromVertex].transform.position);
-        //     gameplayLineRenderer.SetPosition(i * 2 + 1, dotList[edge.ToVertex].transform.position);
-        // }
+        else return;
+    }
+    private void UpdateLine(Vector2 mousePos)
+    {
+        Vector2 tempPos = mousePos;
+        if (currGameplayLineRenderer == null) return;
+        currGameplayLineRenderer.SetPosition(LINE_RENDERER_POS_COUNT - 1, tempPos);
     }
 }
 public class Graph
@@ -271,7 +266,6 @@ public class Edge
 {
     public int FromVertex;
     public int ToVertex;
-
     public Edge(int fromVertex, int toVertex)
     {
         FromVertex = fromVertex;
