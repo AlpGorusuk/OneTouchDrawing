@@ -6,7 +6,6 @@ using UnityEditor;
 #endif
 using UnityEngine;
 
-#region PoolableType Definition
 [System.Serializable]
 public class PoolableType
 {
@@ -25,54 +24,32 @@ public class PoolableType
     [Tooltip(@"If true, the object pool can ignore the maximum if there are no objects in storage, and another is requested.")]
     public bool AutoExpand;
 }
-#endregion
-
 public class ObjectPooler : MonoBehaviour
 {
-    #region Variables
-    /// <summary>
-    /// A static instance of the ObjectPooler
-    /// </summary>
 	private static ObjectPooler Instance;
 
     [Tooltip("If true, the Object Pooler will organize individual object pools under assigned parent transforms. Only works if checked before starting the game.")]
     [SerializeField]
     private bool UseParentTransforms = false;
 
-    /// <summary>
-    /// A list of all poolable types (to be set in the inspector)
-    /// </summary>
-    [Tooltip(@"A list of Poolable Type Definitions")]
     [SerializeField]
     private List<PoolableType> PoolableTypes = new List<PoolableType>();
 
-    /// <summary>
     /// a lookup table to link a sorting tag to a poolable type
-    /// </summary>
     private Dictionary<string, PoolableType> TagTypeLookup;
 
-    /// <summary>
     /// A lookup table which links a prefab to an object pool
-    /// </summary>
     private Dictionary<GameObject, PoolableType> PrefabTypeLookup;
 
-    /// <summary>
+
     /// A dictionary to link a sorting tag to a pool of sleeping objects.
-    /// </summary>
     private Dictionary<string, Queue<GameObject>> SleepingObjects;
 
-    /// <summary>
-    /// 
-    /// </summary>
     private Dictionary<string, HashSet<GameObject>> ActiveObjects;
 
-    /// <summary>
     /// A lookup table which links a sorting tag to a parent transform (assuming UseParentTransforms = true)
-    /// </summary>
     private Dictionary<string, Transform> TypeParents;
-    #endregion
 
-    #region Initialize
     private void Awake()
     {
         Instance = this;
@@ -118,14 +95,9 @@ public class ObjectPooler : MonoBehaviour
             }
         }
     }
-    #endregion
 
-    #region Destroy
 
-    /// <summary>
     /// Deactivate an active object, and enqueue it for later restoration.
-    /// </summary>
-    /// <param name="obj">The active object to deactivate</param>
     public static void Destroy(GameObject obj) => Instance._Destroy(obj);
     public static void DestroyWithTag(string objName) => Instance._Destroy(objName);
 
@@ -158,36 +130,10 @@ public class ObjectPooler : MonoBehaviour
         // and add it to the sleeping queue
         SleepingObjects[sortingTag].Enqueue(goList[0]);
     }
-    #endregion
-
-    #region Generate
-    /// <summary>
-    /// Grab a member from the list of SleepingObjects
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="Identifier">Either the Prefab to instantiate or the Tag for the PoolableType</param>
-    /// <param name="Position">The Position to activate the object at</param>
-    /// <param name="Rotation">The Rotation to activate the object with</param>
-    /// <returns>A gameobject from the correct pool</returns>
     public static GameObject Generate<T>(T Identifier, Vector3 Position, Quaternion Rotation) =>
         Instance._Generate(Identifier, Position, Rotation);
-
-    /// <summary>
-    /// Grab a member from the list of SleepingObjects
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="Identifier">Either the Prefab to instantiate or the Tag for the PoolableType</param>
-    /// <param name="Position">The Position to activate the object at</param>
-    /// <returns>A gameobject from the correct pool</returns>
     public static GameObject Generate<T>(T Identifier, Vector3 Position) =>
         Instance._Generate(Identifier, Position, Quaternion.identity);
-
-    /// <summary>
-    /// Grab a member from the list of SleepingObjects
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="Identifier">Either the Prefab to instantiate or the Tag for the PoolableType</param>
-    /// <returns>A gameobject from the correct pool</returns>
     public static GameObject Generate<T>(T Identifier) =>
         Instance._Generate(Identifier, Vector3.zero, Quaternion.identity);
 
@@ -235,5 +181,4 @@ public class ObjectPooler : MonoBehaviour
 
         return Member;
     }
-    #endregion
 }

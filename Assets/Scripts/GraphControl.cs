@@ -1,9 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.WindowsRuntime;
-using DG.Tweening.Plugins.Core;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class GraphControl : MonoBehaviour
@@ -103,31 +99,29 @@ public class GraphControl : MonoBehaviour
         Vertices.Clear();
     }
 
-    // Depth-first search algoritması ile belirlenen Euler yolu ya da döngüsü için linerenderer ile çizim.
+    // Draw Eulerpath with using DFS
     public void DrawEulerPath(List<int> eulerPath)
     {
-        // Euler yolu boyunca geçilecek noktaları belirlemek için yeni bir Vector3 listesi oluşturuyoruz.
+        // create vector3 list for euler path
         List<Vector3> pathPoints = new List<Vector3>();
 
-        // Euler yolu boyunca gezinerek, pathPoints listesine noktalar ekliyoruz.
         foreach (int vertex in eulerPath)
         {
             Vector2 position = Vertices[vertex];
             pathPoints.Add(new Vector3(position.x, position.y, 0f));
         }
 
-        // LineRenderer bileşeninin pozisyonlarını belirliyoruz.
+        // Set LineRenderer positions
         BGLineRenderer.positionCount = pathPoints.Count;
         BGLineRenderer.SetPositions(pathPoints.ToArray());
     }
 
-    // Köşe ziyareti gerçekleştirir
+    // Visit vertex
     private void VisitVertex(Dot vertex)
     {
         if (startVertex != null)
         {
             bool isVisited = isVisitedEdge(startVertex.GetIndex(), vertex.GetIndex());
-            // Debug.Log("isVisited" + isVisited + startVertex.GetIndex() + " " + vertex.GetIndex());
             if (isVisited) return;
             UpdateVisitedEdges(startVertex.GetIndex(), vertex.GetIndex());
         }
@@ -135,7 +129,7 @@ public class GraphControl : MonoBehaviour
         int vertexIndex = vertex.GetIndex();
         Debug.Log("vertexIndex" + vertexIndex);
         List<int> _availableEdgeVertexList = new List<int>();
-        // Ziyaret edilen tüm kenarları bul ve listeye ekle
+        // Find all edges and add list
         int tempCount = allPossibleEdgeList.Count;
         for (int i = 0; i < tempCount; i++)
         {
@@ -146,10 +140,6 @@ public class GraphControl : MonoBehaviour
             }
         }
         availableEdgeIndexList = _availableEdgeVertexList;
-        for (int i = 0; i < availableEdgeIndexList.Count; i++)
-        {
-            Debug.Log("availableEdgeIndexList" + availableEdgeIndexList[i]);
-        }
         CreateLine(vertex);
     }
     public bool IsAllEdgesVisited()
@@ -218,7 +208,7 @@ public class GraphControl : MonoBehaviour
         }
         return isVisited;
     }
-    // Çizgiyi güncelle
+    // UpdateLine
     private void FixPreviousLinePos(Vector2 pos)
     {
         if (currGameplayLineRenderer != null)
@@ -238,8 +228,8 @@ public class GraphControl : MonoBehaviour
 }
 public class Graph
 {
-    private int V; // Grafın köşe sayısı
-    private List<int>[] adj; // Köşelerin birbirine olan komşulukları için kullanılacak adjacency list
+    private int V; // edge count
+    private List<int>[] adj; //adjacency list for edges
 
     public Graph(int V)
     {
@@ -251,15 +241,15 @@ public class Graph
 
     public void AddEdge(int v, int w)
     {
-        adj[v].Add(w); // v köşesi ile w köşesi arasında bir kenar ekleniyor
-        adj[w].Add(v); // w köşesi ile v köşesi arasında bir kenar ekleniyor
+        adj[v].Add(w); // add egdes between v and w edges
+        adj[w].Add(v);
     }
 
     public List<int> FindEulerPath(int start)
     {
-        List<int> path = new List<int>(); // Oluşturulan yolun tutulacağı liste
-        Dictionary<Tuple<int, int>, bool> visitedEdges = new Dictionary<Tuple<int, int>, bool>(); // Ziyaret edilen kenarların tutulacağı dictionary
-        DFS(start, visitedEdges, path); // Depth-first search algoritmasının kullanılacağı yardımcı fonksiyon
+        List<int> path = new List<int>();
+        Dictionary<Tuple<int, int>, bool> visitedEdges = new Dictionary<Tuple<int, int>, bool>(); // visited edge holder Dictionary
+        DFS(start, visitedEdges, path); // Depth-first search
         return path;
     }
 
@@ -267,14 +257,14 @@ public class Graph
     {
         foreach (int w in adj[v])
         {
-            Tuple<int, int> edge = new Tuple<int, int>(Math.Min(v, w), Math.Max(v, w)); // Kenarı küçük köşe numarasından büyük köşe numarasına doğru sırala
-            if (!visitedEdges.ContainsKey(edge)) // Kenar daha önce ziyaret edilmediyse
+            Tuple<int, int> edge = new Tuple<int, int>(Math.Min(v, w), Math.Max(v, w)); // Sort edges from the smaller vertex number to the larger vertex number
+            if (!visitedEdges.ContainsKey(edge))
             {
-                visitedEdges[edge] = true; // Kenar işaretleniyor
-                DFS(w, visitedEdges, path); // Komşu köşe ziyaret ediliyor
+                visitedEdges[edge] = true;
+                DFS(w, visitedEdges, path); // visit adjencey
             }
         }
-        path.Add(v); // Ziyaret edilen köşe yola ekleniyor
+        path.Add(v); // Add path current edge
     }
 }
 [Serializable]

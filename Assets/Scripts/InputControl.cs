@@ -75,7 +75,7 @@ public class InputControl : Singleton<InputControl>
         Drag_Listeners.Remove(callback);
     }
 
-    // Input Actions ===========================================================
+    // Input Actions
 
     public void On_Pointer_Down(Vector2 pos)
     {

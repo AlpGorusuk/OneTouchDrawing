@@ -76,10 +76,12 @@ public class OnPlayState : State
 
             if (selectedDot != null)
             {
-                _dotCallback = selectedDot.ClickedCallback;
-                _dotCallback?.Invoke();
+                bool isAvailableEdge = gameManager.graphControl.isAvailableEdge(selectedDot.GetIndex());
+                if (!isAvailableEdge && gameManager.graphControl.startVertex != null) { return; }
                 Action<Dot> _startLineCallback = gameManager.graphControl.vertexClickedCallback;
                 _startLineCallback?.Invoke(selectedDot);
+                _dotCallback = selectedDot.ClickedCallback;
+                _dotCallback?.Invoke();
                 isDragging = true;
             }
         }
@@ -93,6 +95,9 @@ public class OnPlayState : State
             _updateLineCallback = gameManager.graphControl.updateLineCallback;
             _updateLineCallback?.Invoke(mousePosition);
         }
+        bool isAllEdgesVisited = gameManager.graphControl.IsAllEdgesVisited();
+        Debug.Log(isAllEdgesVisited);
+        if (isAllEdgesVisited) { stateMachine.ChangeState(gameManager.winState); }
     }
 
     private RaycastHit2D SendRaycast()
