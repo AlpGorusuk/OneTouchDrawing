@@ -186,7 +186,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _clickedBG: {fileID: 1209995322}
   Index: 0
-  nonEdgeDotList: []
 --- !u!58 &183779746563973231
 CircleCollider2D:
   m_ObjectHideFlags: 0
