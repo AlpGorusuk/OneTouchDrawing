@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
 {
-    private const string startGame = "HomeScreen";
+    private const string startGame = "HomeScene";
     private void OnEnable()
     {
         StartLoadScene(startGame);

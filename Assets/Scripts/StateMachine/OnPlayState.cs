@@ -9,7 +9,7 @@ public class OnPlayState : State
     private bool isDragging;
     Action<Vector2> _updateLineCallback;
     Action _dotCallback;
-    public OnPlayState(GameManager gameManager, StateMachine stateMachine) : base(gameManager, stateMachine)
+    public OnPlayState(GameplayManager gameManager, StateMachine stateMachine) : base(gameManager, stateMachine)
     {
     }
     public override void Enter()
@@ -35,6 +35,9 @@ public class OnPlayState : State
                     _dotCallback?.Invoke();
                     Action<Dot> _startLineCallback = gameManager.graphControl.vertexClickedCallback;
                     _startLineCallback?.Invoke(selectedDot);
+                    bool isAllEdgesVisited = gameManager.graphControl.IsAllEdgesVisited();
+                    Debug.Log(isAllEdgesVisited);
+                    if (isAllEdgesVisited) { stateMachine.ChangeState(gameManager.winState); }
                 }
                 else
                 {
@@ -46,6 +49,13 @@ public class OnPlayState : State
                 UpdateLineCallback(gameManager.graphControl.updateLineCallback, temp);
             }
         }
+    }
+    public override void Exit()
+    {
+        base.Exit();
+        InputControl.Instance.Remove_Pointer_Down_Listener(On_Pointer_Down);
+        InputControl.Instance.Remove_Pointer_Up_Listener(On_Pointer_Up);
+        InputControl.Instance.Remove_Drag_Listener(On_Drag);
     }
 
     private void UpdateLineCallback(Action<Vector2> updateLineCallback, Vector2 temp)

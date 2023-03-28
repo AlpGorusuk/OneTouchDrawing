@@ -39,6 +39,8 @@ public class GraphControl : MonoBehaviour
     {
         BGLineRenderer = GetComponent<LineRenderer>();
         visitedEdge = new bool[allPossibleEdgeList.Count];
+        for (int i = 0; i < visitedEdge.Length; i++)
+            visitedEdge[i] = false;
         visitableEdgeIndices = new List<int>();
     }
     //OnEditor Updates
@@ -125,7 +127,7 @@ public class GraphControl : MonoBehaviour
         if (startVertex != null)
         {
             bool isVisited = isVisitedEdge(startVertex.GetIndex(), vertex.GetIndex());
-            Debug.Log("isVisited" + isVisited + startVertex.GetIndex() + " " + vertex.GetIndex());
+            // Debug.Log("isVisited" + isVisited + startVertex.GetIndex() + " " + vertex.GetIndex());
             if (isVisited) return;
             UpdateVisitedEdges(startVertex.GetIndex(), vertex.GetIndex());
         }
@@ -149,6 +151,20 @@ public class GraphControl : MonoBehaviour
             Debug.Log("availableEdgeIndexList" + availableEdgeIndexList[i]);
         }
         CreateLine(vertex);
+    }
+    public bool IsAllEdgesVisited()
+    {
+        bool isAllEdgesVisited = false;
+        for (int i = 0; i < visitedEdge.Length; i++)
+        {
+            if (!visitedEdge[i])
+            {
+                isAllEdgesVisited = false;
+                break;
+            }
+            else isAllEdgesVisited = true;
+        }
+        return isAllEdgesVisited;
     }
     private void CreateLine(Dot vertex)
     {

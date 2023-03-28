@@ -4,10 +4,10 @@ using UnityEngine;
 
 public abstract class State
 {
-    protected GameManager gameManager;
+    protected GameplayManager gameManager;
     protected StateMachine stateMachine;
 
-    protected State(GameManager gameManager, StateMachine stateMachine)
+    protected State(GameplayManager gameManager, StateMachine stateMachine)
     {
         this.gameManager = gameManager;
         this.stateMachine = stateMachine;
