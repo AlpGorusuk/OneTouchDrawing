@@ -9,7 +9,7 @@ However, there are certain rules that players must adhere to while drawing the l
  ## [One Touch Drawing Gameplay](https://www.youtube.com/watch?v=I8WBNI5eEDk)
 
 ### I create **Graph** class for creating shape with using search algorithm DFS
-
+```
 public class Graph
 {
     private int V; // edge count
@@ -51,3 +51,38 @@ public class Graph
         path.Add(v); // Add path current edge
     }
 }
+```
+### For the drawing using only a single continuous line I use EulerPath Algorithm
+
+```
+ private void SetEulerPath()
+    {
+        Graph g = new Graph(edgeList.Count);
+        for (int i = 0; i < edgeList.Count; i++)
+        {
+            int fv = edgeList[i].FromVertex;
+            int tv = edgeList[i].ToVertex;
+            g.AddEdge(fv, tv);
+        }
+        eulerPath = g.FindEulerPath(startIndexForCheckEdgesVisited);
+        eulerPath.Reverse();
+    }
+
+// Draw Eulerpath with using DFS
+    public void DrawEulerPath(List<int> eulerPath)
+    {
+        // create vector3 list for euler path
+        List<Vector3> pathPoints = new List<Vector3>();
+
+        foreach (int vertex in eulerPath)
+        {
+            Vector2 position = Vertices[vertex];
+            pathPoints.Add(new Vector3(position.x, position.y, 0f));
+        }
+
+        // Set LineRenderer positions
+        BGLineRenderer.positionCount = pathPoints.Count;
+        BGLineRenderer.SetPositions(pathPoints.ToArray());
+    }
+
+```
